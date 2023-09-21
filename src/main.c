@@ -1,6 +1,6 @@
 #include <genesis.h>
 
-char textoTela[23] = "Primeiro Game do dipi!";
+char textoTela[23] = "Primeiro Game!";
 
 static void myGamePad(u16 device, u16 changed, u16 state);
 
