@@ -1,14 +1,24 @@
-SGDK_VERSION=2.11
-UID=$(shell id -u)
-GID=$(shell id -g)
-DOCKER_IMAGE=registry.gitlab.com/doragasu/docker-sgdk:v${SGDK_VERSION}
+SGDK_VERSION := 2.11
+UID := $(shell id -u)
+GID := $(shell id -g)
+DOCKER := $(shell which docker)
+DOCKER_IMAGE := hldtux/docker-sgdk:v$(SGDK_VERSION)
+UNAME_S := $(shell uname -s)
+RETROARCH ?= $(shell which retroarch 2>/dev/null)
+CORE := blastem
+TAG_NAME := $(shell git describe --tags --exact-match 2>/dev/null || git rev-parse --short HEAD)
+
+ifeq ($(UNAME_S),Darwin)
+    RETROARCH := /Applications/RetroArch.app/Contents/MacOS/RetroArch
+	CORE := genesis_plus_gx
+endif
 
 .PHONY: compile
 compile:
-	docker run -it --rm --user ${UID}:${GID} -v "${PWD}":/workdir -w /workdir --platform linux/amd64 ${DOCKER_IMAGE}
+	docker run --rm --user ${UID}:${GID} -v "${PWD}":/workdir -w /workdir ${DOCKER_IMAGE} debug
 
 shell:
-	docker run -it --rm -v "${PWD}":/workdir -w /workdir --entrypoint=/bin/bash  --platform linux/amd64 ${DOCKER_IMAGE}
+	docker run -it --rm -v "${PWD}":/workdir -w /workdir --entrypoint=/bin/bash ${DOCKER_IMAGE}
 
 clean:
 	rm -rf out/* build/* src/boot/*
@@ -16,7 +26,8 @@ clean:
 format:
 	clang-format -i src/main.c
 
-RETROARCH=/Applications/RetroArch.app/Contents/MacOS/RetroArch
-RETROARCH_CORE=~/Library/Application\ Support/RetroArch/cores/genesis_plus_gx_libretro.dylib
 run:
-	${RETROARCH} -L ${RETROARCH_CORE} out/rom.bin
+	"${RETROARCH}" -L "${CORE}" out/rom.bin
+	
+zip:
+	zip -9 -j game-$(TAG_NAME).zip out/rom.bin
